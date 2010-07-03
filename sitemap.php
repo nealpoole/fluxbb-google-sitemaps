@@ -56,7 +56,7 @@ while ($cur_forum = $db->fetch_assoc($result2))
 {
     $lastmodified = gmdate('Y-m-d\TH:i:s+00:00', $cur_forum['last_post']);
     $viewforum = 'viewforum.php?id='.$cur_forum['forum_id'];
-    $priority = '1.0';
+    $priority = '0.5';
 
 	$output .= "<url>\n";
 	$output .= "\t<loc>".$pun_config['o_base_url']."/".$viewforum."</loc>\n";
@@ -85,7 +85,7 @@ while ($cur_topic = $db->fetch_assoc($result))
 {
     $lastmodified = gmdate('Y-m-d\TH:i:s+00:00', $cur_topic['last_post']);
     $viewtopic = 'viewtopic.php?id='.$cur_topic['topic_id'];
-    $priority = ($cur_topic['sticky'] == '1') ? '1.0' : '0.5';
+    $priority = ($cur_topic['sticky'] == '1') ? '1.5' : '1.0';
 
 	$output .= "<url>\n";
 	$output .= "\t<loc>".$pun_config['o_base_url']."/".$viewtopic."</loc>\n";
