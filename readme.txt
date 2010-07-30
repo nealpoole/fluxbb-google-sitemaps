@@ -2,7 +2,7 @@
 ##
 ##        Mod title:  Google Sitemap Generator
 ##
-##      Mod version:  1.0.4
+##      Mod version:  1.0.5
 ##  Works on FluxBB:  1.2.*, 1.4.*
 ##     Release date:  2010-07-03
 ##           Author:  Smartys (smartys@punbb-hosting.com)
