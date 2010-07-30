@@ -41,7 +41,7 @@ $result2 = $db->query('SELECT f.id as forum_id, last_post, num_topics FROM '.$db
 
 
 $output = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-$output .= '<urlset xmlns="http://www.google.com/schemas/sitemap/0.84">'."\n";
+$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
 
 // The board itself
 $output .= "<url>\n";
