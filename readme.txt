@@ -15,9 +15,7 @@
 ##
 ##            Notes:  This does not submit the sitemap to Google, you must do that
 ##                    Also, Google only looks at 50k URLs at once, so if you have more than
-##                    50k topics + forums, you need to modify this mod a little. This
-##                    version fixes bugs that caused 1.0.2 not to work. Thanks to gog for
-##		              finding the bugs.
+##                    50k topics + forums, you need to modify this mod a little.
 ##
 ##       DISCLAIMER:  Please note that "mods" are not officially supported by
 ##                    FluxBB. Installation of this modification is done at your

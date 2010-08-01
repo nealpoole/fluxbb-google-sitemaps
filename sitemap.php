@@ -26,103 +26,135 @@ define('PUN_QUIET_VISIT', 1);
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
 
+//
+// CONFIGURATION BEGINS HERE
+//
+
 // false = write to file, true = dynamic
-$dynamic = true;
+define('GENERATE_DYNAMIC_SITEMAP', true);
 
 // This only matters if you're writing to the file
-$filename = 'sitemap.xml';
+define('STATIC_SITEMAP_FILENAME', PUN_ROOT . 'sitemap.xml');
 
+//
+// CONFIGURATION ENDS HERE
+//
 
-// Get the topics
-$result = $db->query('SELECT t.id as topic_id, last_post, sticky, num_replies FROM '.$db->prefix.'topics AS t LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=t.forum_id AND fp.group_id=3) WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND t.moved_to IS NULL ORDER BY last_post DESC') or error('Unable to fetch topic list', __FILE__, __LINE__, $db->error());
+if (GENERATE_DYNAMIC_SITEMAP)
+	$generator = new DynamicSitemapGenerator();
+else
+	$generator = new StaticSitemapGenerator(STATIC_SITEMAP_FILENAME);
 
-// Get the forums
-$result2 = $db->query('SELECT f.id as forum_id, last_post, num_topics FROM '.$db->prefix.'forums AS f LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id=3) WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY f.id DESC') or error('Unable to fetch forum list', __FILE__, __LINE__, $db->error());
-
-
-$output = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
-
-// The board itself
-$output .= "<url>\n";
-$output .= "\t<loc>".$pun_config['o_base_url']."/</loc>\n";
-$output .= "\t<lastmod>".gmdate('Y-m-d\TH:i:s+00:00', time())."</lastmod>\n";
-$output .= "\t<priority>1.0</priority>\n";
-$output .= "</url>\n\n";
-
+$generator->addUrl($pun_config['o_base_url'], time(), null, '1.0');
 
 // Output the data for the forums
-while ($cur_forum = $db->fetch_assoc($result2))
+$result = $db->query('SELECT f.id as forum_id, last_post, num_topics FROM '.$db->prefix.'forums AS f LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id=3) WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY f.id DESC') or error('Unable to fetch forum list', __FILE__, __LINE__, $db->error());
+
+while ($cur_forum = $db->fetch_assoc($result))
 {
-    $lastmodified = gmdate('Y-m-d\TH:i:s+00:00', $cur_forum['last_post']);
-    $viewforum = 'viewforum.php?id='.$cur_forum['forum_id'];
-    $priority = '0.5';
+	$generator->addUrl($pun_config['o_base_url'] . '/viewforum.php?id=' . $cur_forum['forum_id'], $cur_forum['last_post'], null, '0.5');
 
-	$output .= "<url>\n";
-	$output .= "\t<loc>".$pun_config['o_base_url']."/".$viewforum."</loc>\n";
-	$output .= "\t<lastmod>$lastmodified</lastmod>\n";
-	$output .= "\t<priority>$priority</priority>\n";
-	$output .= "</url>\n\n";
-        
-    if ($cur_forum['num_topics'] >= $pun_config['o_disp_topics_default'])
-    {
-        $num_pages = ceil($cur_forum['num_topics'] / $pun_config['o_disp_topics_default']);
+	$num_pages = ceil($cur_forum['num_topics'] / $pun_config['o_disp_topics_default']);
 
-        //Add page number for subsequent pages
-        for ($i = 2; $i <= $num_pages; $i++)
-        {
-            $output .= "<url>\n";
-            $output .= "\t<loc>".$pun_config['o_base_url']."/".$viewforum."&amp;p=".$i."</loc>\n";
-            $output .= "\t<lastmod>$lastmodified</lastmod>\n";
-            $output .= "\t<priority>$priority</priority>\n";
-            $output .= "</url>\n\n";
-        }
-    }
+	// Add page number for subsequent pages
+	for ($i = 2; $i <= $num_pages; ++$i)
+	{
+		$generator->addUrl($pun_config['o_base_url'] . '/viewforum.php?id=' . $cur_forum['forum_id'] . '&p=' . $i, $cur_forum['last_post'], null, '0.5');
+	}
 }
 
 // Output the data for the topics
+$result = $db->query('SELECT t.id as topic_id, last_post, sticky, num_replies FROM '.$db->prefix.'topics AS t LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=t.forum_id AND fp.group_id=3) WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND t.moved_to IS NULL ORDER BY last_post DESC') or error('Unable to fetch topic list', __FILE__, __LINE__, $db->error());
+
 while ($cur_topic = $db->fetch_assoc($result))
 {
-    $lastmodified = gmdate('Y-m-d\TH:i:s+00:00', $cur_topic['last_post']);
-    $viewtopic = 'viewtopic.php?id='.$cur_topic['topic_id'];
-    $priority = ($cur_topic['sticky'] == '1') ? '1.5' : '1.0';
+	$priority = ($cur_topic['sticky'] == '1') ? '1.5' : '1.0';
 
-	$output .= "<url>\n";
-	$output .= "\t<loc>".$pun_config['o_base_url']."/".$viewtopic."</loc>\n";
-	$output .= "\t<lastmod>$lastmodified</lastmod>\n";
-	$output .= "\t<priority>$priority</priority>\n";
-	$output .= "</url>\n\n";
-        
-    if ($cur_topic['num_replies'] >= $pun_config['o_disp_posts_default'])
-    {
-        // We add one because the first post is not counted as a reply but needs to be
-        // taken into account for display
-        $num_pages = ceil(($cur_topic['num_replies'] + 1) / $pun_config['o_disp_posts_default']);
+	$generator->addUrl($pun_config['o_base_url'] . '/viewtopic.php?id=' . $cur_topic['topic_id'], $cur_topic['last_post'], null, $priority);
 
-        for ($i = 2; $i <= $num_pages; $i++)
-        {
-            $output .= "<url>\n";
-            $output .= "\t<loc>".$pun_config['o_base_url']."/".$viewtopic."&amp;p=".$i."</loc>\n";
-            $output .= "\t<lastmod>$lastmodified</lastmod>\n";
-            $output .= "\t<priority>$priority</priority>\n";
-            $output .= "</url>\n\n";
-        }
-    }
+	// We add one because the first post is not counted as a reply but needs to be
+	// taken into account for display
+	$num_pages = ceil(($cur_topic['num_replies'] + 1) / $pun_config['o_disp_posts_default']);
+
+	for ($i = 2; $i <= $num_pages; ++$i)
+	{
+		$generator->addUrl($pun_config['o_base_url'] . '/viewtopic.php?id=' . $cur_topic['topic_id'] . '&p=' . $i, $cur_topic['last_post'], null, $priority);
+	}
 }
-$output .= "</urlset>\n";
 
-// If we chose dynamic, we output the sitemap
-// Otherwise, we write it to the file
-if ($dynamic)
+$generator->completeSitemap();
+
+abstract class SitemapGenerator
 {
-    header('Content-type: application/xml');
-    echo $output;
+	protected function beginSitemap()
+	{
+		$output = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+		$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+		$this->addToSitemap($output);
+	}
+
+	public function completeSitemap()
+	{
+		$this->addToSitemap('</urlset>' . "\n");
+	}
+
+	public function addUrl($loc, $lastmod = null, $changefreq = null, $priority = 0.5)
+	{
+		$output = "\t" . '<url>' . "\n";
+		$output .= "\t\t" . '<loc>' . htmlspecialchars($loc, ENT_QUOTES) . '</loc>' . "\n";
+
+		if ($lastmod != null)
+			$output .= "\t\t" . '<lastmod>' . gmdate('Y-m-d\TH:i:s+00:00', $lastmod) . '</lastmod>' . "\n";
+
+		if ($changefreq != null)
+			$output .= "\t\t" . '<changefreq>' . $changefreq . '</changefreq>' . "\n";
+
+		$output .= "\t\t" . '<priority>' . $priority . '</priority>' . "\n";
+
+		$output .= "\t" . '</url>' . "\n";
+
+		$this->addToSitemap($output);
+	}
+
+	protected abstract function addToSitemap($xml);
 }
-else
+
+class StaticSitemapGenerator extends SitemapGenerator
 {
-    $file = fopen($filename, "w");
-    fwrite($file, $output);
-    fclose($file);
-    echo "Done";
+	private static $file;
+
+	public function __construct($sitemap_file)
+	{
+		$this->file = fopen($sitemap_filename, 'w');
+		$this->beginSitemap();
+	}
+
+	protected function addToSitemap($xml)
+	{
+		fwrite($this->file, $xml);
+	}
+
+	public function completeSitemap()
+	{
+		parent::completeSitemap();
+
+		fclose($file);
+
+		echo 'Done';
+	}
 }
-?>
+
+class DynamicSitemapGenerator extends SitemapGenerator
+{
+	public function __construct()
+	{
+		header('Content-type: application/xml');
+		$this->beginSitemap();
+	}
+
+	protected function addToSitemap($xml)
+	{
+		echo $xml;
+	}
+}
