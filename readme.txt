@@ -4,7 +4,7 @@
 ##
 ##      Mod version:  1.0.5
 ##  Works on FluxBB:  1.2.*, 1.4.*
-##     Release date:  2010-07-03
+##     Release date:  2010-08-01
 ##           Author:  Smartys (smartys@punbb-hosting.com)
 ##
 ##      Description:  Creates a Sitemap for Google of your topics, your forums, and your board.
