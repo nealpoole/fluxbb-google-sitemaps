@@ -88,7 +88,10 @@ abstract class SitemapGenerator
 {
 	protected function beginSitemap()
 	{
+		global $pun_config;
+
 		$output = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+		$output .= '<?xml-stylesheet type="text/xsl" href="' . $pun_config['o_base_url'] . '/sitemap.xsl"?>' . "\n";
 		$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
 		$this->addToSitemap($output);
