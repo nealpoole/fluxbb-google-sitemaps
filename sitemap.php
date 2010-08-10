@@ -68,7 +68,7 @@ $result = $db->query('SELECT t.id as topic_id, last_post, sticky, num_replies FR
 
 while ($cur_topic = $db->fetch_assoc($result))
 {
-	$priority = ($cur_topic['sticky'] == '1') ? '1.5' : '1.0';
+	$priority = ($cur_topic['sticky'] == '1') ? '1.0' : '0.75';
 
 	$generator->addUrl($pun_config['o_base_url'] . '/viewtopic.php?id=' . $cur_topic['topic_id'], $cur_topic['last_post'], null, $priority);
 
