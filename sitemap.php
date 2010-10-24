@@ -142,7 +142,7 @@ class StaticSitemapGenerator extends SitemapGenerator
 	{
 		parent::completeSitemap();
 
-		fclose($file);
+		fclose($this->file);
 
 		echo 'Done';
 	}
