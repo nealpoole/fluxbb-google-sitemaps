@@ -45,7 +45,7 @@ if (GENERATE_DYNAMIC_SITEMAP)
 else
 	$generator = new StaticSitemapGenerator(STATIC_SITEMAP_FILENAME);
 
-$generator->addUrl($pun_config['o_base_url'], time(), null, '1.0');
+$generator->addUrl($pun_config['o_base_url'] . '/', time(), null, '1.0');
 
 // Output the data for the forums
 $result = $db->query('SELECT f.id as forum_id, last_post, num_topics FROM '.$db->prefix.'forums AS f LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id=3) WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY f.id DESC') or error('Unable to fetch forum list', __FILE__, __LINE__, $db->error());
